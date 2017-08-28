@@ -40,3 +40,5 @@ wss.on('connection', function connection (ws) {
         ws.send(msg)
     });
 });
+
+server.listen(8080);
