@@ -1,28 +1,50 @@
-var https = require('https')
-var fs = require('fs')
 
-var privateKey  = fs.readFileSync('./key.pem', 'utf8');
-var certificate = fs.readFileSync('./cert.pem', 'utf8');
-
-var credentials = {key: privateKey, cert: certificate};
-var express = require('express');
-var app = express();
-
-//... bunch of other express stuff here ...
-
-//pass in your express app and credentials to create an https server
-var httpsServer = https.createServer(credentials, app);
+//    openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 100 -nodes
 
 var WebSocketServer = require('ws').Server;
 var wss = new WebSocketServer({
-    server: httpsServer
+    port: 80
 });
+
+var queue = []
 
 wss.on('connection', function connection(ws) {
     ws.on('message', function incoming(message) {
         console.log('received: %s', message);
+        var data = JSON.parse(message)
+        var req = null
+        for (let i in queue) {
+            if (queue[i].seq == data.seq) {
+                req = queue[i]
+                queue.splice(i, 1)
+                break
+            }
+        }
+        queue.forEach((d) => {
+            if (d.seq == data.seq) {
+                req = d
+            }
+        })
+        if (req) {
+            if (data.payload == 'success') {
+
+            } else {
+
+            }
+        }
+
     });
 
-    ws.send('something');
+    var data = {
+        seq: Math.random(),
+        action: 'fetch',
+        payload: {
+            shelfId: 1,
+            offset: 3,
+            size: 5
+        }
+    }
+    queue.push(data)
+    ws.send(JSON.stringify(data));
+
 });
-httpsServer.listen(8442);
