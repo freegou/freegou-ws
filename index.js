@@ -8,10 +8,26 @@ var wss = new WebSocketServer({
 
 var queue = []
 
+
+function removeFromQueue(data) {
+    for (var i in queue) {
+        if (queue[i] == data) {
+            queue.splice(i, 1)
+            break
+        }
+    }
+}
+
 wss.on('connection', function connection(ws) {
+    setInterval(function() {
+        if (ws.readyState == 1)
+            ws.send('fuck')
+    }, 30000)
+
     ws.on('message', function incoming(message) {
         console.log('received: %s', message);
         var data = JSON.parse(message)
+        
         var req = null
         for (let i in queue) {
             if (queue[i].seq == data.seq) {
@@ -45,6 +61,9 @@ wss.on('connection', function connection(ws) {
         }
     }
     queue.push(data)
+    setTimeout(() => {
+        removeFromQueue(data)
+    }, 60000)
     ws.send(JSON.stringify(data));
 
 });
